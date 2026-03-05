@@ -6,6 +6,8 @@ def setup(app):
     app.add_config_value('doxylink_pdf_files', {}, 'env')
     app.add_config_value('doxylink_parse_error_ignore_regexes',
                          default=[], types=[str], rebuild='env')
+    app.add_config_value('doxylink_ambiguous_resolution',
+                         default='shortest', types=[str], rebuild='env')
     app.connect('builder-inited', setup_doxylink_roles)
 
     return {

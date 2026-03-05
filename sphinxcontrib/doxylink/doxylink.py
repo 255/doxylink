@@ -171,7 +171,7 @@ class SymbolMap:
         return matches
 
 
-    def _disambiguate(self, name: str, candidates: List[Entry]) -> Entry:
+    def _disambiguate(self, name: str, candidates: List[Entry], ambiguous_resolution: str = 'shortest') -> Entry:
         '''
         Returns the best-fitting candidate for the given symbol name. All
         candidates are expected to be valid.
@@ -179,6 +179,7 @@ class SymbolMap:
         Args:
             name (str): symbol name
             candidates (list[Entry]): list of candidates to choose from
+            ambiguous_resolution (str): The method for resolving ambiguous references
 
         Returns:
             Entry: the best candidate
@@ -207,22 +208,34 @@ class SymbolMap:
         if len(no_templates) == 1:
             return no_templates[0]
 
-        # If not found by now, return the shortest match, assuming that's the most specific
-        if no_templates:
-            # TODO return a warning here?
-            return min(no_templates, key=lambda entry: len(entry.name))
+        # If not found by now, we have an ambiguity.
+        # Use the configured resolution method.
+        target_list = no_templates if no_templates else candidates
+        matches = [e.name for e in target_list]
 
-        # TODO Offer fuzzy suggestion
-        raise LookupError('Could not find a match')
+        if ambiguous_resolution == 'shortest':
+            return min(target_list, key=lambda entry: len(entry.name))
+        elif ambiguous_resolution == 'strict':
+            raise LookupError(f"Ambiguous link to '{name}'. Matches: {matches}")
+        elif ambiguous_resolution == 'overloads':
+            kinds = {c.kind for c in target_list}
+            if kinds == {'function'}:
+                return min(target_list, key=lambda entry: len(entry.name))
+            raise LookupError(f"Ambiguous link to '{name}'. Matches: {matches}")
+        else:
+            raise ValueError(f"Invalid doxylink_ambiguous_resolution value: '{ambiguous_resolution}'")
 
 
-    def __getitem__(self, item: str) -> Entry:
+    def resolve(self, item: str, ambiguous_resolution: str = 'shortest') -> Entry:
         symbol, normalised_arglist = normalise(item)
 
         # Restrict to functions when given an argument list
         kind = 'function' if normalised_arglist else None
         candidates = self._find_entries(symbol, kind, normalised_arglist)
-        return self._disambiguate(symbol, candidates)
+        return self._disambiguate(symbol, candidates, ambiguous_resolution)
+
+    def __getitem__(self, item: str) -> Entry:
+        return self.resolve(item)
 
 
 def parse_tag_file(doc: ET.ElementTree, parse_error_ignore_regexes: Optional[List[str]]) -> List[Entry]:
@@ -319,6 +332,7 @@ def join(*args):
 
 def create_role(app, tag_filename, rootdir, cache_name, pdf=""):
     parse_error_ignore_regexes = getattr(app.config, 'doxylink_parse_error_ignore_regexes', [])
+    ambiguous_resolution = getattr(app.config, 'doxylink_ambiguous_resolution', 'shortest')
 
     if parse_error_ignore_regexes:
         report_info(app.env, f'Using parse error ignore patterns: {", ".join(parse_error_ignore_regexes)}')
@@ -386,7 +400,7 @@ def create_role(app, tag_filename, rootdir, cache_name, pdf=""):
             return [nodes.inline(title, title)], []
 
         try:
-            url = app.env.doxylink_cache[cache_name]['mapping'][part]
+            url = app.env.doxylink_cache[cache_name]['mapping'].resolve(part, ambiguous_resolution=ambiguous_resolution)
         except LookupError as error:
             inliner.reporter.warning(f'Could not find match for `{part}` in `{tag_filename}` tag file. Error reported was {error}', line=lineno)
             return [nodes.inline(title, title)], []

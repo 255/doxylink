@@ -206,3 +206,115 @@ def test_doxylink_valid_links(doxylink_setup: Path) -> None:
 
     for ns, name in _CXX_NAMES:
         verify_link(content, name)
+
+
+@pytest.mark.parametrize(
+    "resolution_mode, expect_success, expect_error_msg",
+    [
+        ("shortest", True, None),
+        ("strict", False, "Ambiguous link to 'SomeFunction'"),
+        ("overloads", True, None),
+    ],
+)
+def test_doxylink_ambiguous_function_lookup(
+    doxylink_setup: Path,
+    resolution_mode: str,
+    expect_success: bool,
+    expect_error_msg: Optional[str],
+) -> None:
+    """Test ambiguous lookups for functions with different resolution modes."""
+    docs_dir = doxylink_setup
+    build_dir = docs_dir / f"_build_func_{resolution_mode}"
+
+    index_rst = docs_dir / "index.rst"
+    index_rst.write_text(
+        """
+Ambiguous Document
+==================
+
+Ambiguous link to SomeFunction: :test:`SomeFunction`
+""",
+        encoding="utf-8",
+    )
+
+    result = run_sphinx(
+        docs_dir,
+        build_dir,
+        extra_args=[
+            "-W",
+            "-E",
+            "-D",
+            f"doxylink_ambiguous_resolution={resolution_mode}",
+        ],
+        check=False,
+    )
+    assert isinstance(result, subprocess.CompletedProcess)
+
+    if expect_success:
+        assert (
+            result.returncode == 0
+        ), f"Sphinx build failed unexpectedly in mode {resolution_mode}. STDERR: {result.stderr}"
+    else:
+        assert (
+            result.returncode != 0
+        ), f"Sphinx build succeeded unexpectedly in mode {resolution_mode}."
+        output = result.stderr + result.stdout
+        assert (
+            expect_error_msg in output
+        ), f"Output did not contain ambiguity error. Output: {output}"
+
+
+@pytest.mark.parametrize(
+    "resolution_mode, expect_success, expect_error_msg",
+    [
+        ("shortest", True, None),
+        ("strict", False, "Ambiguous link to 'ambiguous_var'"),
+        ("overloads", False, "Ambiguous link to 'ambiguous_var'"),
+    ],
+)
+def test_doxylink_ambiguous_variable_lookup(
+    doxylink_setup: Path,
+    resolution_mode: str,
+    expect_success: bool,
+    expect_error_msg: Optional[str],
+) -> None:
+    """Test ambiguous lookups for variables with different resolution modes."""
+    docs_dir = doxylink_setup
+    build_dir = docs_dir / f"_build_var_{resolution_mode}"
+
+    index_rst = docs_dir / "index.rst"
+    index_rst.write_text(
+        """
+Ambiguous Document
+==================
+
+Ambiguous link to ambiguous_var: :test:`ambiguous_var`
+""",
+        encoding="utf-8",
+    )
+
+    result = run_sphinx(
+        docs_dir,
+        build_dir,
+        extra_args=[
+            "-W",
+            "-E",
+            "-D",
+            f"doxylink_ambiguous_resolution={resolution_mode}",
+        ],
+        check=False,
+    )
+    assert isinstance(result, subprocess.CompletedProcess)
+
+    if expect_success:
+        assert (
+            result.returncode == 0
+        ), f"Sphinx build failed unexpectedly in mode {resolution_mode}. STDERR: {result.stderr}"
+    else:
+        assert (
+            result.returncode != 0
+        ), f"Sphinx build succeeded unexpectedly in mode {resolution_mode}."
+        output = result.stderr + result.stdout
+        assert (
+            expect_error_msg in output
+        ), f"Output did not contain ambiguity error. Output: {output}"
