@@ -66,7 +66,7 @@ argument_type = Opt(qualifier, default='')("qualifier1") + \
 argument = Group(argument_type('argument_type') + Opt(input_name) + Opt(default_value))
 
 # List of arguments in parentheses with an optional 'const' on the end
-arglist = LPAR + delimitedList(argument)('arg_list') + Opt(COMMA + '...')('var_args') + RPAR
+arglist = LPAR + Opt(delimitedList(argument)('arg_list')) + Opt(COMMA) + Opt('...')('var_args') + RPAR
 
 
 def normalise(symbol: str) -> Tuple[str, str]:

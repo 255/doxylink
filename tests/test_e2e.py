@@ -68,7 +68,8 @@ extern int ambiguous_var;
 /// A function-like macro.
 #define FUNCTION_LIKE_MACRO(int x, int y);
 
-
+/// A variadic macro.
+#define VARIADIC_FUNCTION_LIKE_MACRO(...)
 """
 
 _CXX_NAMES = (
@@ -88,6 +89,7 @@ _CXX_NAMES = (
     ("secondary", "ambiguous_var"),
     (None, "SIMPLE_MACRO"),
     (None, "FUNCTION_LIKE_MACRO"),
+    (None, "VARIADIC_FUNCTION_LIKE_MACRO"),
 )
 
 # Assert that all names above are present in _CXX_SOURCE
