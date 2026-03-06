@@ -254,3 +254,23 @@ def test_parse_error_ignore_regexes():
     finally:
         if os.path.exists(test_tag_file):
             os.unlink(test_tag_file)
+
+
+@pytest.mark.parametrize('symbol, resolution, expect_success', [
+    ('my_func', 'shortest', True),
+    ('my_func', 'strict', False),
+    ('my_func', 'overloads', True),
+    ('MyClass', 'shortest', True),
+    ('MyClass', 'strict', False),
+    ('MyClass', 'overloads', False),
+])
+def test_ambiguous_resolution(examples_tag_file, symbol, resolution, expect_success):
+    tag_file = ET.parse(examples_tag_file)
+    mapping = doxylink.SymbolMap(tag_file)
+
+    if expect_success:
+        entry = mapping.resolve(symbol, ambiguous_resolution=resolution)
+        assert entry is not None
+    else:
+        with pytest.raises(LookupError):
+            mapping.resolve(symbol, ambiguous_resolution=resolution)
