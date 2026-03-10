@@ -38,6 +38,8 @@ jobs:
         run: poetry install
       - name: Run mypy
         run: poetry run mypy --install-types --non-interactive sphinxcontrib/doxylink
+      - name: Run mypy on tests
+        run: poetry run mypy --install-types --non-interactive tests
       - name: Run pytest
         run: poetry run pytest
       - name: Test that package builds

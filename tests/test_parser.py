@@ -189,7 +189,7 @@ if __name__ == "__main__":
     try:
         import cProfile as profile
     except ImportError:
-        import profile
+        import profile  # type: ignore[no-redef]
 
     all_tests = arglists + varargs + multiple_qualifiers + functions + numbers_for_defaults + flags_in_defaults
     all_tests += all_tests + all_tests + all_tests + all_tests
