@@ -50,6 +50,10 @@ void FunctionTemplate(T param);
 template <class T>
 constexpr T variable_template = T(3.14);
 
+/// @brief A C++20 concept.
+template <typename T>
+concept TestConcept = requires(T a) { a.method(); };
+
 }  // namespace primary
 
 namespace secondary {
@@ -84,6 +88,7 @@ _CXX_NAMES = (
     ("primary::TestTemplate", "init"),
     ("primary", "FunctionTemplate"),
     ("primary", "variable_template"),
+    ("primary", "TestConcept"),
     ("primary", "ambiguous_var"),
     ("secondary", "TestFunction"),
     ("secondary", "ambiguous_var"),

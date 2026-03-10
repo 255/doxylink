@@ -263,7 +263,7 @@ def parse_tag_file(doc: ET.ElementTree, parse_error_ignore_regexes: Optional[Lis
     entries: List[Entry] = []
     for compound in doc.findall('./compound'):
         compound_kind = compound.get('kind')
-        if compound_kind not in {'namespace', 'class', 'struct', 'file', 'define', 'group', 'page'}:
+        if compound_kind not in {'namespace', 'class', 'struct', 'concept', 'file', 'define', 'group', 'page'}:
             continue
 
         compound_name = compound.findtext('name')
