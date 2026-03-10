@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from unittest.mock import MagicMock
 
 import pytest
-from testfixtures import LogCapture
+from testfixtures import LogCapture  # type: ignore[import]
 
 from sphinxcontrib.doxylink import doxylink
 
